@@ -1,0 +1,15 @@
+react-router-dom
+framer-motion
+react-bootstrap
+react-simple-typewriter
+react-icons
+react-helmet
+react-scroll
+react-scroll-parallax
+react-scroll-parallax-effect
+react-scroll-parallax-effect-group
+react-scroll-parallax-effect-group-item
+react-scroll-parallax-effect-group-item-content
+react-scroll-parallax-effect-group-item-content-item
+lucide-react
+react-icons
