@@ -1,0 +1,58 @@
+.floating-nav {
+  position: fixed;
+  top: 2em;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 1em 3.5em;                  /* 👈 Added more vertical AND horizontal padding */
+  border-radius: 2em;
+  background: rgba(30,30,30,0.22);
+  box-shadow: 0 6px 32px 0 #23212a22, 0 1.1px 0 0 #fff5 inset;
+  backdrop-filter: blur(14px) saturate(140%);
+  filter: brightness(1.03);
+  transition: box-shadow 0.22s, filter 0.08s, background 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.floating-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 2.3em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.floating-nav li a {
+  font-family: "MD Lorien", serif;
+  font-size: 1.18em;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.18em 0.9em;
+  border-radius: 1em;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  opacity: 1;
+  transition: background 0.22s, color 0.12s, transform 0.19s, padding 0.19s;
+  box-shadow: none;
+}
+
+.floating-nav li a:hover, .floating-nav li a:focus {
+  color: #cdf3f8;
+  font-size: 1.28em;
+  font-weight: 400;
+  transform: scale(1.19) translateY(-1.5px);
+  padding: 0.18em 1.05em;
+}
+
+.floating-nav::before {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom right,rgba(255,255,255,0.23),rgba(255,255,255,0.08),rgba(0,0,0,0.22));
+}

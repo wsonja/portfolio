@@ -1,0 +1,45 @@
+.tech-marquee {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: 1.4em 0;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 10%,
+      black 90%,
+      transparent
+    );
+  }
+  
+  .tech-track {
+    display: flex;
+    width: max-content;
+    animation: marquee-scroll 28s linear infinite;
+  }
+  
+  .tech-item {
+    font-family: "MD Lorien", serif;
+    font-size: 1.35rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    margin-right: 2.6em;
+    color: #5e5b6a;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  
+  .tech-item:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  
