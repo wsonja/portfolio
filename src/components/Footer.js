@@ -1,13 +1,15 @@
+import { links } from "../data/content";
+
 export default function Footer() {
-    return (
-      <footer className="footer mt-5">
-        <div className="footer-links mb-2">
-          <a href="https://linkedin.com/in/sonja-wong" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-          <a href="mailto:sonja.hinting@gmail.com">Email</a>
-        </div>
-        <div>
-          © {new Date().getFullYear()} Sonja Wong. All rights reserved.
-        </div>
-      </footer>
-    );
-  }
+  return (
+    <footer className="site-footer">
+      <div>
+        <a href={links.github} target="_blank" rel="noreferrer">GitHub</a>
+        <a href={links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+        <a href={links.substack} target="_blank" rel="noreferrer">Substack</a>
+        <a href={`mailto:${links.email}`}>Email</a>
+      </div>
+      <p>© {new Date().getFullYear()} Sonja Wong</p>
+    </footer>
+  );
+}

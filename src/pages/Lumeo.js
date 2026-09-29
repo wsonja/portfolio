@@ -27,7 +27,7 @@ export default function Lumeo() {
         >
           <Button
             as={Link}
-            to="/projects"
+            to="/#projects"
             variant="outline-light"
             className="mb-4 back-button"
           >

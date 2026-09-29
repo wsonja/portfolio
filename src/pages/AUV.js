@@ -116,7 +116,7 @@ export default function AUV() {
         >
           <Button
             as={Link}
-            to="/projects"
+            to="/#projects"
             variant="outline-light"
             className="mb-4 back-button"
           >
@@ -133,6 +133,15 @@ export default function AUV() {
                 7-channel YOLO training, underwater post-processing,
                 and real-time C++ deployment.
               </p>
+
+              <a
+                className="text-link"
+                href="https://medium.com/@cuauv.cornell/yolo7d-multispectral-real-time-object-detection-for-auvs-3769bb889124"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Medium article
+              </a>
 
               <div className="mb-4 mt-4">
                 {skills.map((skill) => (
