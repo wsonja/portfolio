@@ -185,6 +185,10 @@
   margin-bottom: 14px;
 }
 
+.hero .eyebrow {
+  color: var(--ink);
+}
+
 .hero h1,
 .block h2,
 .feature h2 {

@@ -51,8 +51,8 @@ export default function Gallery() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const place = (value) => {
-      const shot = rootEl.querySelector(".gallery-window").getBoundingClientRect().width;
-      const frame = rootEl.querySelector(".gallery-frame").getBoundingClientRect().width;
+      const shot = parseFloat(getComputedStyle(rootEl.querySelector(".gallery-window")).width);
+      const frame = parseFloat(getComputedStyle(rootEl.querySelector(".gallery-frame")).width);
       const step = frame / 2 + shot / 2 + 28;
       const layout = (card, blurred) => {
         const index = Number(card.dataset.index);
