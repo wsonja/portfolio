@@ -332,14 +332,14 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         };
         on(window, 'pointerup', endDrag);
         on(window, 'pointercancel', endDrag);
-        onEl(faces[1], 'click', e => { const a = e.target.closest('a'); if (a && a.getAttribute('href') === '#')
+        onEl(faces[0], 'click', e => { const a = e.target.closest('a'); if (a && a.getAttribute('href') === '#')
             e.preventDefault(); });
         /* ---------- illustrated scene (canvas 2D, flat coloured shapes + grain) ---------- */
         const PAL = { sky: '#9CCBF2', skyLt: '#CFE6F8', skyDp: '#5E9FD8', cream: '#F4EADB', creamDk: '#E6D6BF',
             mocha: '#8A6248', coffee: '#5B3D2C', espresso: '#33231A', ink: '#17171A', lilac: '#C9C2EE', mint: '#BFE3D0' };
         const scenes = [
-            { cv: q('sceneF'), draw: drawFront, w: 0, h: 0, ctx: null },
-            { cv: q('sceneB'), draw: drawBack, w: 0, h: 0, ctx: null },
+            { cv: q('sceneF'), draw: drawBack, w: 0, h: 0, ctx: null },
+            { cv: q('sceneB'), draw: drawFront, w: 0, h: 0, ctx: null },
         ];
         let RD = 1;
         const grain = document.createElement('canvas');
@@ -509,70 +509,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             c.fill();
             c.fillStyle = PAL.creamDk;
             c.fillRect(-30 + o[0], 222 + o[1], 600, 40);
-            // coffee: one flat off-white cup on a sky saucer, latte heart, gentle steam
-            o = Pp(16);
-            const cx0 = 438 + o[0], cy0 = 206 + o[1];
-            c.lineCap = 'round';
-            for (let j = 0; j < 2; j++) {
-                const ph = reduce ? .45 : (t * .28 + j * .5) % 1, a = Math.sin(Math.PI * ph);
-                c.strokeStyle = `rgba(255,255,255,${(.7 * a).toFixed(3)})`;
-                c.lineWidth = 7 - ph * 3;
-                c.beginPath();
-                for (let qq = 0; qq <= 12; qq++) {
-                    const yy = cy0 - 66 - qq * 4 - ph * 26, xx = cx0 - 7 + j * 14 + Math.sin(qq * .45 + t * 1.3 + j * 2.4) * (3 + qq * .35);
-                    if (qq)
-                        c.lineTo(xx, yy);
-                    else
-                        c.moveTo(xx, yy);
-                }
-                c.stroke();
-            }
-            c.fillStyle = 'rgba(23,23,26,.09)';
-            c.beginPath();
-            c.ellipse(cx0 + 2, cy0 + 3, 50, 5, 0, 0, Math.PI * 2);
-            c.fill();
-            c.fillStyle = PAL.skyDp;
-            rr(c, cx0 - 47, cy0 - 7, 94, 10, 5);
-            c.fill(); // saucer
-            c.fillStyle = PAL.sky;
-            rr(c, cx0 - 47, cy0 - 9, 94, 7, 3.5);
-            c.fill();
-            const CUP = '#F7F4EC', EDGE = 'rgba(23,23,26,.13)'; // one flat off-white, hairline edge
-            c.lineWidth = 10.6;
-            c.strokeStyle = EDGE;
-            c.beginPath();
-            c.arc(cx0 + 30, cy0 - 33, 12, -1.45, 1.45);
-            c.stroke();
-            c.lineWidth = 8.4;
-            c.strokeStyle = CUP;
-            c.beginPath();
-            c.arc(cx0 + 30, cy0 - 33, 12, -1.45, 1.45);
-            c.stroke();
-            rr(c, cx0 - 33, cy0 - 58, 66, 50, [6, 6, 24, 24]);
-            c.fillStyle = CUP;
-            c.fill();
-            c.lineWidth = 1.1;
-            c.strokeStyle = EDGE;
-            c.stroke();
-            c.fillStyle = CUP;
-            c.beginPath();
-            c.ellipse(cx0, cy0 - 58, 33, 7.5, 0, 0, Math.PI * 2);
-            c.fill();
-            c.stroke();
-            c.fillStyle = PAL.mocha;
-            c.beginPath();
-            c.ellipse(cx0, cy0 - 58, 28.5, 5.6, 0, 0, Math.PI * 2);
-            c.fill();
-            c.save();
-            c.translate(cx0, cy0 - 58.4);
-            c.scale(1, .22);
-            c.fillStyle = PAL.cream; // latte heart, seen in perspective
-            c.beginPath();
-            c.moveTo(0, 13);
-            c.bezierCurveTo(-22, -1, -12, -18, 0, -6);
-            c.bezierCurveTo(12, -18, 22, -1, 0, 13);
-            c.fill();
-            c.restore();
             c.restore();
         }
         function drawBack(c, W, H, t) {
@@ -604,7 +540,7 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             c.save();
             c.translate(rx, ry);
             c.rotate(recAngle * .8);
-            c.fillStyle = PAL.mocha;
+            c.fillStyle = PAL.skyDp;
             circ(c, 0, 0, R0 * .34);
             c.fill();
             c.fillStyle = PAL.cream;
@@ -612,6 +548,9 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             c.arc(0, 0, R0 * .34, -.5, .5);
             c.lineTo(0, 0);
             c.closePath();
+            c.fill();
+            c.fillStyle = PAL.sky;
+            circ(c, 0, 0, R0 * .16);
             c.fill();
             c.restore();
             c.fillStyle = PAL.cream;
@@ -742,17 +681,18 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             c.fillStyle = PAL.sky;
             rr(c, w * .06, h * .08, w * .88, h * .6, h * .1);
             c.fill();
-            c.fillStyle = PAL.cream;
-            c.fillRect(w * .06, h * .56, w * .88, h * .12);
             c.fillStyle = PAL.ink;
-            circ(c, w * .32, h * .4, h * .22);
+            circ(c, w * .28, h * .38, h * .2);
             c.fill();
             c.fillStyle = PAL.skyDp;
-            circ(c, w * .32, h * .4, h * .08);
+            circ(c, w * .28, h * .38, h * .07);
             c.fill();
-            c.fillStyle = '#F7F4EC';
-            rr(c, w * .68, h * .4, w * .12, h * .17, [2, 2, 5, 5]);
-            c.fill();
+            [PAL.cream, PAL.skyLt, PAL.lilac, PAL.mint, PAL.cream].forEach((col, i) => {
+                const bh = h * (.14 + (i % 3) * .07);
+                c.fillStyle = col;
+                rr(c, w * .5 + i * w * .075, h * .38 - bh / 2, w * .045, bh, 2);
+                c.fill();
+            });
             c.fillStyle = PAL.ink;
             rr(c, w * .06, h * .76, w * .4, h * .07, 2);
             c.fill();
@@ -912,6 +852,20 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
               <section className="swic-face swic-front" data-swic="front" aria-label="Front">
                 <div className="swic-shade"/><div className="swic-sheen"><i /></div>
                 <div className="swic-scene"><canvas data-swic="sceneF" aria-hidden="true"/></div>
+                <div className="swic-bid">
+                  <span className="swic-bwm" role="img" aria-label="sonja" dangerouslySetInnerHTML={{ __html: WORDMARK }}/>
+                  <p className="swic-bline swic-mono">{P.backLine}</p>
+                  <nav className="swic-links" aria-label="Links">
+                    {P.links.map(l => {
+            const ext = /^https?:/.test(l.href);
+            return <a key={l.label} href={l.href} {...(ext ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{l.label}</a>;
+        })}
+                  </nav>
+                </div>
+              </section>
+              <section className="swic-face swic-back" data-swic="back" aria-label="Back">
+                <div className="swic-shade"/><div className="swic-sheen"><i /></div>
+                <div className="swic-scene"><canvas data-swic="sceneB" aria-hidden="true"/></div>
                 <div className="swic-id">
                   <div><h2 className="swic-name">{P.name}</h2><p className="swic-role">{P.role}</p></div>
                   <div className="swic-facts swic-mono">
@@ -946,20 +900,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
                       <path data-swic="icoCheck" d="M3.6 8.4l2.9 2.8 5.9-6.2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0"/>
                     </svg>
                   </button>
-                </div>
-              </section>
-              <section className="swic-face swic-back" data-swic="back" aria-label="Back: links">
-                <div className="swic-shade"/><div className="swic-sheen"><i /></div>
-                <div className="swic-scene"><canvas data-swic="sceneB" aria-hidden="true"/></div>
-                <div className="swic-bid">
-                  <span className="swic-bwm" role="img" aria-label="sonja" dangerouslySetInnerHTML={{ __html: WORDMARK }}/>
-                  <p className="swic-bline swic-mono">{P.backLine}</p>
-                  <nav className="swic-links" aria-label="Links">
-                    {P.links.map(l => {
-            const ext = /^https?:/.test(l.href);
-            return <a key={l.label} href={l.href} {...(ext ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{l.label}</a>;
-        })}
-                  </nav>
                 </div>
               </section>
             </div>
