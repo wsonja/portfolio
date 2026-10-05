@@ -5,9 +5,8 @@
  *   card's aspect ratio (560 x 392 design units, scaled to fit). No global CSS, no page-level nav.
  * - All styles are scoped under `.swic` and injected by the component; class names are prefixed `swic-`.
  * - 3D float / cursor tilt / drag-to-spin / flip, now-playing strip (play / pause drives the robot-arm
- *   tonearm and the record), heart with burst + toast, save into a small "Saved" tray, reduced motion,
- *   sound (synthesised WebAudio) off by default.
- * - Optional small in-card controls (Flip / Reset / Sound), or drive it yourself through the ref handle.
+ *   tonearm and the record), heart with burst + toast, save into a small "Saved" tray, reduced motion.
+ * - Optional small in-card controls (Flip / Reset), or drive it yourself through the ref handle.
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 export const PROFILE = {
@@ -54,8 +53,8 @@ const CSS = `
 .swic .swic-sheen i{position:absolute;top:0;bottom:0;left:50%;width:34%;margin-left:-17%;transform:rotate(18deg);
   background:linear-gradient(90deg,rgba(18,18,18,0),rgba(18,18,18,.022) 30%,rgba(255,255,255,.9) 47%,rgba(255,255,255,.9) 53%,rgba(18,18,18,.022) 70%,rgba(18,18,18,0));opacity:0}
 .swic .swic-face > *:not(.swic-shade):not(.swic-sheen){position:relative;z-index:2}
-.swic .swic-scene{position:relative;z-index:1;flex:1 1 auto;min-height:0;border-radius:11px;overflow:hidden;background:#9CCBF2}
-.swic .swic-scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.swic .swic-scene{position:relative;z-index:1;flex:1 1 auto;min-height:0;border-radius:11px;overflow:visible;background:#9CCBF2}
+.swic .swic-scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:11px}
 .swic .swic-id{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:12px 8px 10px}
 .swic .swic-name{font-size:22px;font-weight:500;letter-spacing:-.02em;line-height:1.15;color:var(--swic-ink)}
 .swic .swic-role{margin-top:3px;font-size:13px;color:var(--swic-muted);letter-spacing:-.005em}
@@ -72,6 +71,9 @@ const CSS = `
 .swic .swic-links a::after{content:"\\2197";font-size:11px;opacity:.6}
 .swic .swic-player{display:flex;align-items:center;gap:10px;margin:2px 4px;padding:7px 8px 7px 7px;border-radius:12px;background:#F4F4F1}
 .swic .swic-pbtn{position:relative;width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--swic-ink);transition:background .2s}
+.swic .swic-pbtn.swic-scene-like{position:absolute;right:12px;bottom:12px;z-index:3;width:36px;height:36px;background:rgba(255,255,255,.92);box-shadow:0 8px 18px -10px rgba(18,18,18,.55)}
+.swic .swic-pbtn.swic-scene-like svg{width:16px;height:16px}
+.swic .swic-pbtn.swic-scene-like:hover{background:#fff}
 .swic .swic-pbtn:hover{background:rgba(18,18,18,.06)}
 .swic .swic-pbtn svg{width:16px;height:16px;display:block;overflow:visible}
 .swic .swic-pbtn.swic-play{background:var(--swic-ink);color:#fff}.swic .swic-pbtn.swic-play:hover{background:#2a2a2a}
@@ -113,14 +115,13 @@ const CSS = `
 const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, controls = true, autoPlay = true, inset = 0, className, style }, ref) {
     const P = { ...PROFILE, ...profileOverride };
     const rootRef = useRef(null);
-    const api = useRef({ flip: () => { }, reset: () => { }, togglePlay: () => { }, setSound: () => { } });
+    const api = useRef({ flip: () => { }, reset: () => { }, togglePlay: () => { } });
     const profRef = useRef(P);
     profRef.current = P;
     useImperativeHandle(ref, () => ({
         flip: () => api.current.flip(),
         reset: () => api.current.reset(),
         togglePlay: () => api.current.togglePlay(),
-        setSound: (on) => api.current.setSound(on),
     }), []);
     const BW = DW + inset * 2, BH = DH + inset * 2;
     useEffect(() => {
@@ -159,65 +160,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             root.classList.add('swic-ready');
             sizeCanvas();
         };
-        /* ---------- sound (WebAudio, synthesized, off by default) ---------- */
-        let soundOn = false, actx = null;
-        const audio = () => {
-            if (!actx) {
-                const W = window;
-                const AC = window.AudioContext || W.webkitAudioContext;
-                actx = new AC();
-            }
-            return actx;
-        };
-        const noise = (dur) => { const a = audio(), b = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++)
-            d[i] = Math.random() * 2 - 1; const s = a.createBufferSource(); s.buffer = b; return s; };
-        const sfx = {
-            flip() {
-                const a = audio(), n = noise(.4), f = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime;
-                f.type = 'bandpass';
-                f.Q.value = 1.4;
-                f.frequency.setValueAtTime(700, t);
-                f.frequency.exponentialRampToValueAtTime(2600, t + .3);
-                g.gain.setValueAtTime(0, t);
-                g.gain.linearRampToValueAtTime(.07, t + .06);
-                g.gain.exponentialRampToValueAtTime(.001, t + .38);
-                n.connect(f).connect(g).connect(a.destination);
-                n.start(t);
-                n.stop(t + .4);
-            },
-            pop() {
-                const a = audio(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
-                o.type = 'sine';
-                o.frequency.setValueAtTime(520, t);
-                o.frequency.exponentialRampToValueAtTime(1040, t + .09);
-                g.gain.setValueAtTime(.12, t);
-                g.gain.exponentialRampToValueAtTime(.001, t + .16);
-                o.connect(g).connect(a.destination);
-                o.start(t);
-                o.stop(t + .17);
-            },
-            tick() {
-                const a = audio(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
-                o.frequency.value = 1320;
-                g.gain.setValueAtTime(.03, t);
-                g.gain.exponentialRampToValueAtTime(.001, t + .08);
-                o.connect(g).connect(a.destination);
-                o.start(t);
-                o.stop(t + .09);
-            },
-        };
-        const play = (k) => { if (soundOn)
-            try {
-                sfx[k]();
-            }
-            catch { /* audio unavailable */ } };
-        const sndBtn = root.querySelector('[data-swic="sound"]');
-        const setSound = (v) => { soundOn = v; sndBtn?.setAttribute('aria-pressed', String(v)); sndBtn?.setAttribute('aria-label', v ? 'Sound on' : 'Sound off'); if (v) {
-            void audio().resume?.();
-            play('tick');
-        } };
-        if (sndBtn)
-            onEl(sndBtn, 'click', () => setSound(!soundOn));
         /* ---------- motion state ---------- */
         const S = { ry: 0, rx: 0, vy: 0, vx: 0, base: 0, mode: 'spring', lift: 0, vlift: 0, press: 0, vpress: 0 };
         const ptr = { nx: 0, ny: 0, tx: 0, ty: 0, last: -1e9 };
@@ -229,13 +171,11 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             if (reduce) {
                 S.base += 180;
                 card.classList.toggle('swic-flipped', flipped());
-                play('flip');
                 return;
             }
             S.base = Math.round(S.ry / 180) * 180 + 180;
             S.mode = 'spring';
             S.vlift += 70;
-            play('flip');
         }
         function reset() {
             if (reduce) {
@@ -616,7 +556,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         const togglePlay = () => {
             player.playing = !player.playing;
             setPlayIcon();
-            play('tick');
             if (reduce) {
                 player.armK = player.playK = player.playing ? 1 : 0;
                 drawScene(0, 3);
@@ -629,10 +568,10 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         onEl(pplay, 'click', togglePlay);
         setPlayIcon();
         updatePlayer(0);
-        // like: heart pops filled with a sky particle burst + toast
+        // like: heart pops filled with a sky particle burst + toast. Front and back share one state.
         let liked = false;
-        const likeBtn = q('like'), toast = q('toast'), toastTxt = q('toastTxt');
-        const sparks = [...likeBtn.querySelectorAll('.swic-spark')];
+        const likeBtns = [...root.querySelectorAll('[data-swic="like"]')];
+        const toast = q('toast'), toastTxt = q('toastTxt');
         let toastTimer = 0;
         function showToast(txt) {
             toastTxt.textContent = txt;
@@ -640,29 +579,37 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             tween(.32, k => { const e = outCubic(k); toast.style.opacity = e.toFixed(3); toast.style.transform = `translate(-50%,${(10 * (1 - e)).toFixed(1)}px)`; });
             toastTimer = window.setTimeout(() => tween(.3, k => { toast.style.opacity = (1 - k).toFixed(3); toast.style.transform = `translate(-50%,${(-6 * k).toFixed(1)}px)`; }), 1500);
         }
-        onEl(likeBtn, 'click', () => {
+        const syncLike = (on) => {
+            likeBtns.forEach(btn => {
+                btn.classList.toggle('swic-on', on);
+                btn.setAttribute('aria-pressed', String(on));
+                btn.setAttribute('aria-label', on ? 'Unlike' : 'Like');
+            });
+        };
+        const burstLike = (btn) => {
+            const ic = btn.querySelector('svg');
+            const sparks = [...btn.querySelectorAll('.swic-spark')];
+            if (ic)
+                tween(.45, k => { ic.style.transform = `scale(${(k < .3 ? 1 - .25 * k / .3 : .75 + .25 * outBack((k - .3) / .7)).toFixed(3)})`; });
+            sparks.forEach((sp, i) => {
+                const a = i / 8 * Math.PI * 2 + .2, d = 16 + (i % 2) * 6;
+                tween(.55, k => { const e = outCubic(k); sp.style.opacity = (k < .15 ? k / .15 : 1 - (k - .15) / .85).toFixed(3); sp.style.transform = `translate(${(Math.cos(a) * d * e).toFixed(1)}px,${(Math.sin(a) * d * e).toFixed(1)}px) scale(${(1 - .6 * k).toFixed(2)})`; });
+            });
+        };
+        likeBtns.forEach(btn => onEl(btn, 'click', () => {
             liked = !liked;
-            likeBtn.classList.toggle('swic-on', liked);
-            likeBtn.setAttribute('aria-pressed', String(liked));
-            likeBtn.setAttribute('aria-label', liked ? 'Unlike' : 'Like');
-            const ic = likeBtn.querySelector('svg');
+            syncLike(liked);
             if (liked) {
-                play('pop');
-                if (ic)
-                    tween(.45, k => { ic.style.transform = `scale(${(k < .3 ? 1 - .25 * k / .3 : .75 + .25 * outBack((k - .3) / .7)).toFixed(3)})`; });
-                sparks.forEach((sp, i) => {
-                    const a = i / 8 * Math.PI * 2 + .2, d = 15 + (i % 2) * 5;
-                    tween(.55, k => { const e = outCubic(k); sp.style.opacity = (k < .15 ? k / .15 : 1 - (k - .15) / .85).toFixed(3); sp.style.transform = `translate(${(Math.cos(a) * d * e).toFixed(1)}px,${(Math.sin(a) * d * e).toFixed(1)}px) scale(${(1 - .6 * k).toFixed(2)})`; });
-                });
+                burstLike(btn);
                 showToast('Added to Liked');
             }
             else {
-                play('tick');
+                const ic = btn.querySelector('svg');
                 if (ic)
                     tween(.25, k => { ic.style.transform = `scale(${(.85 + .15 * k).toFixed(3)})`; });
                 showToast('Removed from Liked');
             }
-        });
+        }));
         // save: + morphs into a check, the card dips, a mini thumbnail flies into the "Saved" tray
         let saved = 0;
         const saveBtn = q('save'), tray = q('tray'), thumb = q('thumb'), count = q('count');
@@ -724,7 +671,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
                 check.style.opacity = v.toFixed(3);
                 check.style.strokeDashoffset = (14 * (1 - v)).toFixed(2);
             });
-            play(isOn ? 'pop' : 'tick');
             count.textContent = String(saved);
             if (!isOn) {
                 setTray(false);
@@ -833,8 +779,8 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         document.addEventListener('visibilitychange', vis);
         cleanups.push(() => document.removeEventListener('visibilitychange', vis));
         start();
-        api.current = { flip, reset, togglePlay, setSound };
-        return () => { stop(); cleanups.forEach(f => f()); void actx?.close().catch(() => { }); };
+        api.current = { flip, reset, togglePlay };
+        return () => { stop(); cleanups.forEach(f => f()); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [BW, BH, autoPlay]);
     const slices = Array.from({ length: SL }, (_, i) => (<div key={i} className={'swic-slice' + (i === 0 || i === SL - 1 ? ' swic-rim' : '')} style={{ transform: `translateZ(${(-T / 2 + .35 + (T - .7) * i / (SL - 1)).toFixed(2)}px)` }}/>));
@@ -849,7 +795,16 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
               {slices}
               <section className="swic-face swic-front" data-swic="front" aria-label="Front">
                 <div className="swic-shade"/><div className="swic-sheen"><i /></div>
-                <div className="swic-scene"><canvas data-swic="sceneF" aria-hidden="true"/></div>
+                <div className="swic-scene">
+                  <canvas data-swic="sceneF" aria-hidden="true"/>
+                  <button className="swic-pbtn swic-heart swic-scene-like" data-swic="like" type="button" aria-pressed="false" aria-label="Like">
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path className="swic-hfill" d={HEART}/>
+                      <path className="swic-hline" d={HEART} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                    </svg>
+                    {Array.from({ length: 8 }, (_, i) => <i key={i} className="swic-spark"/>)}
+                  </button>
+                </div>
                 <div className="swic-bid">
                   <span className="swic-bwm" role="img" aria-label="sonja" dangerouslySetInnerHTML={{ __html: WORDMARK }}/>
                   <nav className="swic-links" aria-label="Links">
@@ -911,9 +866,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             </button>
             <button className="swic-cbtn" data-swic="reset" type="button" aria-label="Reset card" title="Reset (R)">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.5-3.6"/><path d="M4.2 1.9v2.7h2.7"/></svg>
-            </button>
-            <button className="swic-cbtn" data-swic="sound" type="button" aria-pressed="false" aria-label="Sound off" title="Sound">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 6.2h2.2L8 3.5v9L4.7 9.8H2.5z" fill="currentColor" stroke="none"/><path d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.5 3.8a6 6 0 0 1 0 8.4"/></svg>
             </button>
           </div>)}
       </div>
