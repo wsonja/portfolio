@@ -41,7 +41,9 @@ export function Hero() {
           </div>
         </div>
       </div>
-      <IntroCard />
+      <div className="intro-card-slot">
+        <IntroCard />
+      </div>
       <ScrollCue />
     </section>
   );
