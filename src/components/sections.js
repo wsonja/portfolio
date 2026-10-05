@@ -4,7 +4,7 @@ import { Typewriter } from "react-simple-typewriter";
 import headshot from "../assets/headshot-web.jpg";
 import dusk from "../assets/landscape-dusk.jpg";
 import bokeh from "../assets/landscape-bokeh.jpg";
-import Gallery from "./Gallery";
+import IntroCard from "./IntroCard";
 import TechPills from "./TechPills";
 import {
   experiences,
@@ -41,7 +41,7 @@ export function Hero() {
           </div>
         </div>
       </div>
-      <Gallery />
+      <IntroCard />
       <ScrollCue />
     </section>
   );
