@@ -16,10 +16,10 @@ export const PROFILE = {
     facts: ['Based in NY', 'Cornell'],
     backLine: 'Cornell CS',
     links: [
-        { label: 'GitHub', href: '#' },
-        { label: 'LinkedIn', href: '#' },
-        { label: 'Email', href: '#' },
-        { label: 'Resume', href: '#' }, // PLACEHOLDER, e.g. /resume.pdf
+        { label: 'GitHub', href: 'https://github.com/wsonja' },
+        { label: 'LinkedIn', href: 'https://www.linkedin.com/in/sonja-wong' },
+        { label: 'Email', href: 'mailto:sw2374@cornell.edu' },
+        { label: 'Resume', href: 'https://drive.google.com/file/d/1bJfzH6JQsTYHZVkPkriRCGAcesm-fRHV/view?usp=sharing' },
     ],
     nowPlaying: 'Sonja Wong',
     track: { length: 194, start: 47 },
