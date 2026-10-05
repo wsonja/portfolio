@@ -13,15 +13,13 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 export const PROFILE = {
     name: 'Sonja Wong',
     role: 'Software engineer',
-    facts: ['Based in NY', 'Cornell'],
-    backLine: 'Cornell CS',
     links: [
         { label: 'GitHub', href: 'https://github.com/wsonja' },
         { label: 'LinkedIn', href: 'https://www.linkedin.com/in/sonja-wong' },
         { label: 'Email', href: 'mailto:sw2374@cornell.edu' },
         { label: 'Resume', href: 'https://drive.google.com/file/d/1bJfzH6JQsTYHZVkPkriRCGAcesm-fRHV/view?usp=sharing' },
     ],
-    nowPlaying: 'Sonja Wong',
+    nowPlaying: 'New York',
     track: { length: 194, start: 47 },
 };
 const DW = 560, DH = 392, T = 6, SL = 9; // design width / height, edge thickness, edge slices
@@ -854,7 +852,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
                 <div className="swic-scene"><canvas data-swic="sceneF" aria-hidden="true"/></div>
                 <div className="swic-bid">
                   <span className="swic-bwm" role="img" aria-label="sonja" dangerouslySetInnerHTML={{ __html: WORDMARK }}/>
-                  <p className="swic-bline swic-mono">{P.backLine}</p>
                   <nav className="swic-links" aria-label="Links">
                     {P.links.map(l => {
             const ext = /^https?:/.test(l.href);
@@ -868,9 +865,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
                 <div className="swic-scene"><canvas data-swic="sceneB" aria-hidden="true"/></div>
                 <div className="swic-id">
                   <div><h2 className="swic-name">{P.name}</h2><p className="swic-role">{P.role}</p></div>
-                  <div className="swic-facts swic-mono">
-                    {P.facts.map((f, i) => <span key={f + i} className={'swic-chip' + (i ? '' : ' swic-sky')}>{f}</span>)}
-                  </div>
                 </div>
                 <div className="swic-player">
                   <button className="swic-pbtn swic-play" data-swic="pplay" type="button" aria-label="Pause">
@@ -880,7 +874,7 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
                     </svg>
                   </button>
                   <div className="swic-pmid">
-                    <div className="swic-ptitle"><span className="swic-mono">Now playing</span><span>{P.nowPlaying}</span></div>
+                    <div className="swic-ptitle"><span className="swic-mono">Now playing:</span><span>{P.nowPlaying}</span></div>
                     <div className="swic-pbar swic-mono">
                       <span data-swic="tEl">0:00</span>
                       <div className="swic-ptrack"><div className="swic-pfill" data-swic="pfill"/><div className="swic-pknob" data-swic="pknob"/></div>
