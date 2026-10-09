@@ -4,11 +4,12 @@
  * - Drop-in replacement for the landscape photo: it fills the width of its container and keeps the
  *   card's aspect ratio (560 x 392 design units, scaled to fit). No global CSS, no page-level nav.
  * - All styles are scoped under `.swic` and injected by the component; class names are prefixed `swic-`.
- * - 3D float / cursor tilt / drag-to-spin / flip, now-playing strip (play / pause drives the robot-arm
- *   tonearm and the record), heart with burst + toast, save into a small "Saved" tray, reduced motion.
+ * - 3D float / cursor tilt / drag-to-spin / flip, sketch on both faces, now-playing strip,
+ *   heart with burst + toast, save into a small "Saved" tray, reduced motion.
  * - Optional small in-card controls (Flip / Reset), or drive it yourself through the ref handle.
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import sketch from '../assets/uber-sketch.jpg';
 export const PROFILE = {
     name: 'Sonja Wong',
     role: 'Software engineer',
@@ -53,8 +54,8 @@ const CSS = `
 .swic .swic-sheen i{position:absolute;top:0;bottom:0;left:50%;width:34%;margin-left:-17%;transform:rotate(18deg);
   background:linear-gradient(90deg,rgba(18,18,18,0),rgba(18,18,18,.022) 30%,rgba(255,255,255,.9) 47%,rgba(255,255,255,.9) 53%,rgba(18,18,18,.022) 70%,rgba(18,18,18,0));opacity:0}
 .swic .swic-face > *:not(.swic-shade):not(.swic-sheen){position:relative;z-index:2}
-.swic .swic-scene{position:relative;z-index:1;flex:1 1 auto;min-height:0;border-radius:11px;overflow:visible;background:#9CCBF2}
-.swic .swic-scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:11px}
+.swic .swic-scene{position:relative;z-index:1;flex:1 1 auto;min-height:0;border-radius:11px;overflow:hidden;background:#f6f3ee}
+.swic .swic-scene-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
 .swic .swic-id{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:12px 8px 10px}
 .swic .swic-name{font-size:22px;font-weight:500;letter-spacing:-.02em;line-height:1.15;color:var(--swic-ink)}
 .swic .swic-role{margin-top:3px;font-size:13px;color:var(--swic-muted);letter-spacing:-.005em}
@@ -93,9 +94,9 @@ const CSS = `
 .swic .swic-toast svg{width:13px;height:13px;display:block}
 .swic .swic-tray{position:absolute;right:var(--swic-edge);top:var(--swic-edge);display:flex;align-items:center;gap:8px;height:32px;padding:0 12px 0 5px;border-radius:999px;background:#fff;
   box-shadow:inset 0 0 0 1px var(--swic-line),0 8px 22px -12px rgba(18,18,18,.3);font-size:12px;font-weight:500;letter-spacing:-.01em;opacity:0;transform:translateY(-8px);pointer-events:none;z-index:7}
-.swic .swic-thumb{width:32px;height:22px;border-radius:6px;flex:none;display:block}
+.swic .swic-thumb{width:32px;height:22px;border-radius:6px;flex:none;display:block;object-fit:cover}
 .swic .swic-tray b{font-weight:500}.swic .swic-count{font-size:10.5px;color:var(--swic-muted);min-width:1ch;display:inline-block}
-.swic .swic-mini{position:absolute;left:0;top:0;width:112px;height:78px;border-radius:9px;pointer-events:none;z-index:8;box-shadow:0 10px 30px -10px rgba(18,18,18,.35)}
+.swic .swic-mini{position:absolute;left:0;top:0;width:112px;height:78px;border-radius:9px;pointer-events:none;z-index:8;box-shadow:0 10px 30px -10px rgba(18,18,18,.35);object-fit:cover}
 .swic .swic-ctl{position:absolute;left:var(--swic-edge);top:var(--swic-edge);display:flex;gap:6px;z-index:7;opacity:0;transition:opacity .25s}
 .swic:hover .swic-ctl,.swic:focus-within .swic-ctl{opacity:1}
 @media (hover:none){.swic .swic-ctl{opacity:1}}
@@ -158,7 +159,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             box.style.height = BH + 'px';
             box.style.transform = `scale(${scale})`;
             root.classList.add('swic-ready');
-            sizeCanvas();
         };
         /* ---------- motion state ---------- */
         const S = { ry: 0, rx: 0, vy: 0, vx: 0, base: 0, mode: 'spring', lift: 0, vlift: 0, press: 0, vpress: 0 };
@@ -272,237 +272,9 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         on(window, 'pointercancel', endDrag);
         onEl(faces[0], 'click', e => { const a = e.target.closest('a'); if (a && a.getAttribute('href') === '#')
             e.preventDefault(); });
-        /* ---------- illustrated scene (canvas 2D, flat coloured shapes + grain) ---------- */
-        const PAL = { sky: '#9CCBF2', skyLt: '#CFE6F8', skyDp: '#5E9FD8', cream: '#F4EADB', creamDk: '#E6D6BF',
-            mocha: '#8A6248', coffee: '#5B3D2C', espresso: '#33231A', ink: '#17171A', lilac: '#C9C2EE', mint: '#BFE3D0' };
-        const scenes = [
-            { cv: q('sceneF'), draw: drawBack, w: 0, h: 0, ctx: null },
-            { cv: q('sceneB'), draw: drawFront, w: 0, h: 0, ctx: null },
-        ];
-        let RD = 1;
-        const grain = document.createElement('canvas');
-        grain.width = grain.height = 160;
-        {
-            const g = grain.getContext('2d');
-            if (g) {
-                const im = g.createImageData(160, 160);
-                for (let i = 0; i < im.data.length; i += 4) {
-                    const v = Math.random() * 255;
-                    im.data[i] = im.data[i + 1] = im.data[i + 2] = v;
-                    im.data[i + 3] = 255;
-                }
-                g.putImageData(im, 0, 0);
-            }
-        }
-        let grainPat = null;
-        function sizeCanvas() {
-            RD = clamp((window.devicePixelRatio || 1) * scale * 1.25, 1, 3); // oversample: shown on a tilted 3D plane
-            scenes.forEach(s => { s.w = s.cv.clientWidth; s.h = s.cv.clientHeight; s.cv.width = Math.max(1, Math.round(s.w * RD)); s.cv.height = Math.max(1, Math.round(s.h * RD)); s.ctx = s.cv.getContext('2d'); });
-            grainPat = scenes[0].ctx ? scenes[0].ctx.createPattern(grain, 'repeat') : null;
-            drawScene(0, 3.0);
-            drawScene(1, 3.0);
-        }
         const easeIO = (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         const lerp = (a, b, k) => a + (b - a) * k;
-        const rr = (c, x, y, w, h, r) => { c.beginPath(); c.roundRect(x, y, w, h, r); };
-        const circ = (c, x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); };
-        // the story is driven by the player: Play swings the robot arm in and drops the needle, the record spins up; Pause lifts and spins down
         const player = { playing: autoPlay, armK: autoPlay ? 1 : 0, playK: autoPlay ? 1 : 0, pos: 0 };
-        const story = () => ({ arm: easeIO(player.armK), play: player.playK });
-        let recAngle = 0, recSpeed = 0;
-        function drawScene(i, t) {
-            const s = scenes[i], c = s.ctx;
-            if (!c || !s.w)
-                return;
-            c.setTransform(RD, 0, 0, RD, 0, 0);
-            c.clearRect(0, 0, s.w, s.h);
-            s.draw(c, s.w, s.h, t);
-            if (grainPat) {
-                c.save();
-                c.setTransform(1, 0, 0, 1, 0, 0);
-                c.globalAlpha = .07;
-                c.globalCompositeOperation = 'overlay';
-                c.fillStyle = grainPat;
-                c.fillRect(0, 0, s.cv.width, s.cv.height);
-                c.restore();
-            }
-        }
-        function drawFront(c, W, H, t) {
-            const st = story(), k = W / 520; // design space: 520 wide, anchored to the bottom
-            const px = reduce ? 0 : clamp(ptr.nx + Math.sin(S.ry * Math.PI / 180) * .6, -1, 1), py = reduce ? 0 : ptr.ny;
-            const Pp = (d) => [px * d * k, py * d * .6 * k]; // parallax offset per layer depth
-            c.save();
-            c.fillStyle = PAL.sky;
-            c.fillRect(0, 0, W, H);
-            c.translate(0, H - 250 * k);
-            c.scale(k, k); // from here: 520 x 250 design units
-            let o;
-            // back hills
-            o = Pp(6);
-            c.fillStyle = PAL.skyLt;
-            c.beginPath();
-            c.moveTo(-20 + o[0], 250);
-            c.bezierCurveTo(60 + o[0], 150 + o[1], 170 + o[0], 160 + o[1], 260 + o[0], 205 + o[1]);
-            c.bezierCurveTo(330 + o[0], 170 + o[1], 450 + o[0], 150 + o[1], 560 + o[0], 200 + o[1]);
-            c.lineTo(560, 260);
-            c.closePath();
-            c.fill();
-            // the record (spins up while the needle is down)
-            o = Pp(10);
-            const rx = 158 + o[0], ry = 128 + o[1], R0 = 98;
-            c.fillStyle = 'rgba(23,23,26,.16)';
-            circ(c, rx + 6, ry + 8, R0);
-            c.fill();
-            c.fillStyle = PAL.ink;
-            circ(c, rx, ry, R0);
-            c.fill();
-            c.lineWidth = 1;
-            for (let g = 0; g < 14; g++) {
-                c.strokeStyle = `rgba(255,255,255,${g % 4 === 0 ? .1 : .045})`;
-                circ(c, rx, ry, 40 + g * 4.1);
-                c.stroke();
-            }
-            c.fillStyle = 'rgba(255,255,255,.07)';
-            c.beginPath();
-            c.moveTo(rx, ry);
-            c.arc(rx, ry, R0 - 3, -2.3, -1.85);
-            c.closePath();
-            c.fill();
-            c.beginPath();
-            c.moveTo(rx, ry);
-            c.arc(rx, ry, R0 - 3, .84, 1.3);
-            c.closePath();
-            c.fill();
-            c.save();
-            c.translate(rx, ry);
-            c.rotate(recAngle);
-            c.fillStyle = PAL.skyDp;
-            circ(c, 0, 0, 34);
-            c.fill();
-            c.fillStyle = PAL.cream;
-            c.beginPath();
-            c.arc(0, 0, 34, -.5, .5);
-            c.lineTo(0, 0);
-            c.closePath();
-            c.fill();
-            c.fillStyle = PAL.sky;
-            circ(c, 0, 0, 16);
-            c.fill();
-            c.restore();
-            c.fillStyle = PAL.cream;
-            circ(c, rx, ry, 3.2);
-            c.fill();
-            // robot arm = tonearm: base on the desk, two segments, needle head
-            o = Pp(12);
-            const bx = 318 + o[0], by = 206 + o[1];
-            const tip = [lerp(352, 236, st.arm), lerp(52, 96 + (st.play > .5 ? Math.sin(t * 9) * .6 : 0), st.arm)];
-            const L1 = 92, L2 = 88, dx = tip[0] - bx, dy = tip[1] - (by - 22), d = Math.min(L1 + L2 - .1, Math.hypot(dx, dy));
-            const a0 = Math.atan2(dy, dx), a1 = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
-            const el = [bx + Math.cos(a0 + a1) * L1, by - 22 + Math.sin(a0 + a1) * L1];
-            c.lineCap = 'round';
-            c.strokeStyle = PAL.coffee;
-            c.lineWidth = 14;
-            c.beginPath();
-            c.moveTo(bx, by - 22);
-            c.lineTo(el[0], el[1]);
-            c.stroke();
-            c.strokeStyle = PAL.mocha;
-            c.lineWidth = 11;
-            c.beginPath();
-            c.moveTo(el[0], el[1]);
-            c.lineTo(tip[0], tip[1]);
-            c.stroke();
-            c.fillStyle = PAL.cream;
-            circ(c, el[0], el[1], 7.5);
-            c.fill();
-            c.fillStyle = PAL.coffee;
-            circ(c, el[0], el[1], 2.6);
-            c.fill();
-            c.save();
-            c.translate(tip[0], tip[1]);
-            c.rotate(Math.atan2(tip[1] - el[1], tip[0] - el[0]));
-            c.fillStyle = PAL.ink;
-            rr(c, -4, -8, 22, 16, 5);
-            c.fill();
-            c.fillStyle = PAL.skyLt;
-            circ(c, 6, 0, 3);
-            c.fill();
-            c.restore();
-            c.fillStyle = PAL.ink;
-            rr(c, bx - 26, by - 30, 52, 34, 10);
-            c.fill();
-            c.fillStyle = PAL.sky;
-            rr(c, bx - 26, by - 14, 52, 5, 2.5);
-            c.fill();
-            c.fillStyle = PAL.cream;
-            circ(c, bx, by - 22, 8.5);
-            c.fill();
-            c.fillStyle = PAL.ink;
-            circ(c, bx, by - 22, 3);
-            c.fill();
-            // desk
-            o = Pp(14);
-            c.fillStyle = PAL.cream;
-            rr(c, -30 + o[0], 204 + o[1], 600, 60, 8);
-            c.fill();
-            c.fillStyle = PAL.creamDk;
-            c.fillRect(-30 + o[0], 222 + o[1], 600, 40);
-            c.restore();
-        }
-        function drawBack(c, W, H, t) {
-            const st = story(), k = W / 520;
-            c.fillStyle = PAL.sky;
-            c.fillRect(0, 0, W, H);
-            c.save();
-            c.scale(k, k);
-            const h = H / k, mid = h / 2;
-            const cols = [PAL.cream, PAL.skyLt, PAL.lilac, PAL.mint, PAL.cream, PAL.skyLt];
-            const n = 13, gap = 9, bw = (520 - 220 - gap * (n - 1)) / n;
-            for (let i = 0; i < n; i++) {
-                const lv = reduce ? .5 + .4 * Math.sin(i * .7) : .35 + .45 * Math.abs(Math.sin(t * 2.1 + i * .55)) * (.6 + .4 * Math.sin(t * .7 + i * .21)) + .2 * Math.max(0, Math.sin(t * Math.PI * 2 / .9));
-                const bh = Math.max(bw, lv * (h - 40) * (.12 + .88 * st.play));
-                c.fillStyle = cols[i % cols.length];
-                rr(c, 200 + i * (bw + gap), mid - bh / 2, bw, bh, bw / 2);
-                c.fill();
-            }
-            const rx = 100, ry = mid, R0 = Math.min(78, mid - 14);
-            c.fillStyle = PAL.ink;
-            circ(c, rx, ry, R0);
-            c.fill();
-            for (let g = 0; g < 9; g++) {
-                c.strokeStyle = `rgba(255,255,255,${g % 3 === 0 ? .1 : .05})`;
-                c.lineWidth = 1;
-                circ(c, rx, ry, R0 * .42 + g * R0 * .06);
-                c.stroke();
-            }
-            c.save();
-            c.translate(rx, ry);
-            c.rotate(recAngle * .8);
-            c.fillStyle = PAL.skyDp;
-            circ(c, 0, 0, R0 * .34);
-            c.fill();
-            c.fillStyle = PAL.cream;
-            c.beginPath();
-            c.arc(0, 0, R0 * .34, -.5, .5);
-            c.lineTo(0, 0);
-            c.closePath();
-            c.fill();
-            c.fillStyle = PAL.sky;
-            circ(c, 0, 0, R0 * .16);
-            c.fill();
-            c.restore();
-            c.fillStyle = PAL.cream;
-            circ(c, rx, ry, 2.6);
-            c.fill();
-            c.restore();
-        }
-        function updateRecord(dt) {
-            const st = story(), target = st.play * (Math.PI * 2 / 1.8);
-            recSpeed += (target - recSpeed) * (1 - Math.exp(-dt * 2.2));
-            recAngle += recSpeed * dt;
-            if (!reduce && st.play === 0 && st.arm === 0)
-                recAngle += .25 * dt; // idle drift so it never looks frozen
-        }
         /* ---------- tiny tween runner (driven by the frame clock) ---------- */
         const tweens = [];
         const tween = (dur, fn, done) => { if (reduce) {
@@ -558,8 +330,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             setPlayIcon();
             if (reduce) {
                 player.armK = player.playK = player.playing ? 1 : 0;
-                drawScene(0, 3);
-                drawScene(1, 3);
             }
             const ic = pplay.querySelector('svg');
             if (ic)
@@ -614,38 +384,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         let saved = 0;
         const saveBtn = q('save'), tray = q('tray'), thumb = q('thumb'), count = q('count');
         const plus = q('icoPlus'), check = q('icoCheck');
-        function paintThumb(cv) {
-            const c = cv.getContext('2d');
-            if (!c)
-                return;
-            const w = cv.width, h = cv.height;
-            c.clearRect(0, 0, w, h);
-            c.fillStyle = '#fff';
-            rr(c, 0, 0, w, h, h * .16);
-            c.fill();
-            c.fillStyle = PAL.sky;
-            rr(c, w * .06, h * .08, w * .88, h * .6, h * .1);
-            c.fill();
-            c.fillStyle = PAL.ink;
-            circ(c, w * .28, h * .38, h * .2);
-            c.fill();
-            c.fillStyle = PAL.skyDp;
-            circ(c, w * .28, h * .38, h * .07);
-            c.fill();
-            [PAL.cream, PAL.skyLt, PAL.lilac, PAL.mint, PAL.cream].forEach((col, i) => {
-                const bh = h * (.14 + (i % 3) * .07);
-                c.fillStyle = col;
-                rr(c, w * .5 + i * w * .075, h * .38 - bh / 2, w * .045, bh, 2);
-                c.fill();
-            });
-            c.fillStyle = PAL.ink;
-            rr(c, w * .06, h * .76, w * .4, h * .07, 2);
-            c.fill();
-            c.fillStyle = 'rgba(18,18,18,.25)';
-            rr(c, w * .06, h * .87, w * .26, h * .05, 2);
-            c.fill();
-        }
-        paintThumb(thumb);
         let trayV = 0;
         const setTray = (vis) => {
             const v0 = trayV;
@@ -685,11 +423,10 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             const x0 = BW / 2 - 56, y0 = BH / 2 - 39;
             const x1 = (to.left - br.left) / scale + to.width / scale / 2 - 56, y1 = (to.top - br.top) / scale + to.height / scale / 2 - 39;
             const s1 = to.width / scale / 112;
-            const mini = document.createElement('canvas');
+            const mini = document.createElement('img');
             mini.className = 'swic-mini';
-            mini.width = 224;
-            mini.height = 156;
-            paintThumb(mini);
+            mini.src = sketch;
+            mini.alt = '';
             mini.style.transform = `translate(${x0}px,${y0}px)`;
             box.appendChild(mini);
             setTray(true);
@@ -750,11 +487,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
             shadow.style.opacity = (.95 - .25 * h2 - .3 * up).toFixed(3);
             runTweens(tn);
             updatePlayer(dt);
-            updateRecord(dt);
-            if (cy > -.2)
-                drawScene(0, t);
-            if (cy < .2)
-                drawScene(1, t);
             raf = requestAnimationFrame(frame);
         }
         const start = () => { if (running || reduce || !visible || document.hidden)
@@ -764,8 +496,6 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
         const ro = new ResizeObserver(() => fit());
         ro.observe(root);
         cleanups.push(() => ro.disconnect());
-        void document.fonts?.ready.then(() => { if (rootRef.current)
-            sizeCanvas(); });
         const io = new IntersectionObserver(es => { visible = es.some(e => e.isIntersecting); if (visible)
             start();
         else
@@ -796,7 +526,7 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
               <section className="swic-face swic-front" data-swic="front" aria-label="Front">
                 <div className="swic-shade"/><div className="swic-sheen"><i /></div>
                 <div className="swic-scene">
-                  <canvas data-swic="sceneF" aria-hidden="true"/>
+                  <img className="swic-scene-art" src={sketch} alt="" />
                   <button className="swic-pbtn swic-heart swic-scene-like" data-swic="like" type="button" aria-pressed="false" aria-label="Like">
                     <svg viewBox="0 0 16 16" aria-hidden="true">
                       <path className="swic-hfill" d={HEART}/>
@@ -817,7 +547,7 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
               </section>
               <section className="swic-face swic-back" data-swic="back" aria-label="Back">
                 <div className="swic-shade"/><div className="swic-sheen"><i /></div>
-                <div className="swic-scene"><canvas data-swic="sceneB" aria-hidden="true"/></div>
+                <div className="swic-scene"><img className="swic-scene-art" src={sketch} alt="" /></div>
                 <div className="swic-id">
                   <div><h2 className="swic-name">{P.name}</h2><p className="swic-role">{P.role}</p></div>
                 </div>
@@ -858,7 +588,7 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
           </div>
         </div>
         <div className="swic-tray" data-swic="tray" role="status" aria-live="polite">
-          <canvas className="swic-thumb" data-swic="thumb" width={64} height={44} aria-hidden="true"/><b>Saved</b><span className="swic-count swic-mono" data-swic="count">0</span>
+          <img className="swic-thumb" data-swic="thumb" src={sketch} alt="" /><b>Saved</b><span className="swic-count swic-mono" data-swic="count">0</span>
         </div>
         {controls && (<div className="swic-ctl" role="toolbar" aria-label="Card controls">
             <button className="swic-cbtn" data-swic="flip" type="button" aria-label="Flip card" title="Flip (F)">
