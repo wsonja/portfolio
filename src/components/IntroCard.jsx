@@ -10,6 +10,7 @@
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import sketch from '../assets/uber-sketch.jpg';
+import nySketch from '../assets/ny-sketch.jpg';
 export const PROFILE = {
     name: 'Sonja Wong',
     role: 'Software engineer',
@@ -80,9 +81,9 @@ const CSS = `
 .swic .swic-pbtn.swic-play{background:var(--swic-ink);color:#fff}.swic .swic-pbtn.swic-play:hover{background:#2a2a2a}
 .swic .swic-pbtn.swic-play svg{width:12px;height:12px}
 .swic .swic-pmid{flex:1;min-width:0}
-.swic .swic-ptitle{display:flex;align-items:baseline;gap:6px;font-size:12px;font-weight:500;letter-spacing:-.005em;white-space:nowrap;overflow:hidden}
-.swic .swic-ptitle .swic-mono{font-size:9.5px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--swic-faint)}
-.swic .swic-pbar{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:9.5px;color:var(--swic-faint);font-variant-numeric:tabular-nums}
+.swic .swic-ptitle{display:flex;align-items:baseline;gap:6px;font-family:var(--sans,"DM Sans","Helvetica Neue",Helvetica,Arial,sans-serif);font-size:13px;font-weight:500;letter-spacing:-.011em;text-transform:none;white-space:nowrap;overflow:hidden}
+.swic .swic-plabel{font-weight:500;color:var(--swic-ink)}
+.swic .swic-pbar{display:flex;align-items:center;gap:8px;margin-top:5px;font-family:var(--sans,"DM Sans","Helvetica Neue",Helvetica,Arial,sans-serif);font-size:12px;font-weight:500;letter-spacing:-.011em;color:var(--swic-muted);font-variant-numeric:tabular-nums}
 .swic .swic-ptrack{position:relative;flex:1;height:3px;border-radius:3px;background:rgba(18,18,18,.12)}
 .swic .swic-pfill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--swic-ink);width:0}
 .swic .swic-pknob{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--swic-ink);left:0}
@@ -547,7 +548,7 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
               </section>
               <section className="swic-face swic-back" data-swic="back" aria-label="Back">
                 <div className="swic-shade"/><div className="swic-sheen"><i /></div>
-                <div className="swic-scene"><img className="swic-scene-art" src={sketch} alt="" /></div>
+                <div className="swic-scene"><img className="swic-scene-art" src={nySketch} alt="" /></div>
                 <div className="swic-id">
                   <div><h2 className="swic-name">{P.name}</h2><p className="swic-role">{P.role}</p></div>
                 </div>
@@ -559,8 +560,8 @@ const IntroCard = forwardRef(function IntroCard({ profile: profileOverride, cont
                     </svg>
                   </button>
                   <div className="swic-pmid">
-                    <div className="swic-ptitle"><span className="swic-mono">Now playing:</span><span>{P.nowPlaying}</span></div>
-                    <div className="swic-pbar swic-mono">
+                    <div className="swic-ptitle"><span className="swic-plabel">Now playing:</span><span>{P.nowPlaying}</span></div>
+                    <div className="swic-pbar">
                       <span data-swic="tEl">0:00</span>
                       <div className="swic-ptrack"><div className="swic-pfill" data-swic="pfill"/><div className="swic-pknob" data-swic="pknob"/></div>
                       <span data-swic="tRem">-0:00</span>
